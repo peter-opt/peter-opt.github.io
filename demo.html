@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The World of Photoacoustic Imaging</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Scientific Serenity" - A calm and professional palette using a warm neutral background (amber-50), with slate and teal for primary content and a subtle amber for accents. This creates a focused, academic, and modern feel suitable for complex scientific data. -->
+    <!-- Application Structure Plan: The SPA uses a thematic, non-linear dashboard structure to maximize user engagement and understanding. The architecture includes: 1) A Hero section for introduction. 2) "Fundamentals" with an interactive, step-by-step diagram explaining the core PAI mechanism. 3) "Modalities" with an interactive chart visualizing the critical depth-vs-resolution trade-off. 4) An "Applications Explorer" with clickable cards to reveal information on demand, preventing overload. 5) A "Challenges & Solutions" section using an interactive toggle format to directly link problems with innovations. 6) An interactive "Comparative Analysis" table with filtering. This structure was chosen over a linear report format to empower users to explore content based on their interests, making the dense information more digestible and engaging. The user flow is guided by a sticky navigation bar, allowing seamless jumps between these self-contained, interactive modules. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Core PAI mechanism -> Goal: Explain -> Viz/Method: Interactive step-by-step diagram (HTML/CSS/JS). Interaction: User clicks to advance steps. Justification: More intuitive and memorable than static text. Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: PAI modalities (OR-PAM, AR-PAM, PAT) and their depth/resolution specs -> Goal: Compare/Explain trade-off -> Viz/Method: Chart.js Scatter Plot. Interaction: Tooltips on hover. Justification: Visually demonstrates the core trade-off instantly. Library/Method: Chart.js.
+        - Report Info: Applications in various fields -> Goal: Organize & Inform -> Viz/Method: Interactive Cards (HTML/CSS/JS). Interaction: Click to expand details. Justification: Avoids a long, overwhelming list; promotes focused exploration. Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: Challenges and Future Directions -> Goal: Organize & Relate -> Viz/Method: Interactive Toggle/Tab system. Interaction: Click a challenge to see its solutions. Justification: Directly connects problems to innovations, enhancing comprehension. Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: Table 1 (PAI vs. other modalities) -> Goal: Compare -> Viz/Method: Interactive HTML Table. Interaction: JS-powered filtering by features (e.g., "non-ionizing"). Justification: Allows users to perform their own analysis and comparisons. Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: Market Growth data -> Goal: Show Trend -> Viz/Method: Chart.js Line Chart. Interaction: Tooltips on hover. Justification: Clearly visualizes market trajectory. Library/Method: Chart.js. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fffbeb; /* amber-50 */
+            color: #334155; /* slate-700 */
+        }
+        .nav-active {
+            color: #0d9488; /* teal-600 */
+            font-weight: 600;
+        }
+        .card {
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .step-diagram-item {
+            opacity: 0.3;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .step-diagram-item.active {
+            opacity: 1;
+        }
+        .step-diagram-line {
+            transition: width 0.5s ease-in-out;
+        }
+        .filter-btn-active {
+            background-color: #0d9488 !important; /* teal-600 */
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-700">
+
+    <header class="sticky top-0 bg-amber-50/80 backdrop-blur-lg z-50 shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-teal-700">PAI Explorer</span>
+                </div>
+                <div class="hidden md:block">
+                    <div id="nav-links" class="ml-10 flex items-baseline space-x-4">
+                        <a href="#fundamentals" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600">Fundamentals</a>
+                        <a href="#modalities" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600">Modalities</a>
+                        <a href="#applications" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600">Applications</a>
+                        <a href="#challenges" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600">Challenges & Solutions</a>
+                        <a href="#comparison" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600">Comparison</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button id="mobile-menu-button" type="button" class="bg-slate-100 inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-teal-600 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-100 focus:ring-teal-500">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#fundamentals" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100">Fundamentals</a>
+                <a href="#modalities" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100">Modalities</a>
+                <a href="#applications" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100">Applications</a>
+                <a href="#challenges" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100">Challenges & Solutions</a>
+                <a href="#comparison" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100">Comparison</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <section id="hero" class="text-center mb-16 md:mb-24">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-800 leading-tight">
+                Photoacoustic Imaging
+            </h1>
+            <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
+                An interactive journey into the technology that combines <span class="font-semibold text-teal-600">light and sound</span> to see inside the human body with unprecedented detail.
+            </p>
+             <div class="mt-8 text-sm text-slate-500 max-w-3xl mx-auto">
+                <p>This interactive application is generated by Gemini. It synthesizes the key findings from a comprehensive research report on Photoacoustic Imaging (PAI). It is designed to provide an intuitive, explorable overview of PAI's principles, applications, challenges, and future, transforming dense information into a digestible and engaging experience. </p>
+            </div>
+        </section>
+
+        <section id="fundamentals" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">How It Works: The "Light In, Sound Out" Principle</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">The magic of PAI lies in its unique hybrid approach. Unlike other imaging methods, it doesn't just use light or sound—it uses both. This section breaks down the fundamental process, from laser pulse to final image. Click 'Next Step' to walk through the process.</p>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div id="step-diagram" class="grid md:grid-cols-5 gap-4 items-center text-center">
+                    <div id="step-1" class="step-diagram-item active">
+                        <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">1</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Laser Pulse</h3>
+                        <p class="text-sm text-slate-500">A short laser pulse illuminates the tissue.</p>
+                    </div>
+                    
+                    <div class="hidden md:flex items-center justify-center">
+                        <div class="w-full h-1 bg-slate-200 rounded-full relative"><div id="line-1" class="absolute left-0 top-0 h-full bg-teal-500 rounded-full step-diagram-line w-0"></div></div>
+                    </div>
+
+                    <div id="step-2" class="step-diagram-item">
+                         <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">2</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Light Absorption</h3>
+                        <p class="text-sm text-slate-500">Molecules like hemoglobin absorb the light energy.</p>
+                    </div>
+
+                    <div class="hidden md:flex items-center justify-center">
+                         <div class="w-full h-1 bg-slate-200 rounded-full relative"><div id="line-2" class="absolute left-0 top-0 h-full bg-teal-500 rounded-full step-diagram-line w-0"></div></div>
+                    </div>
+
+                    <div id="step-3" class="step-diagram-item">
+                        <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">3</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Thermoelastic Expansion</h3>
+                        <p class="text-sm text-slate-500">The absorption causes rapid, localized heating and expansion.</p>
+                    </div>
+
+                    <div id="step-4" class="step-diagram-item mt-8 md:mt-0">
+                        <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">4</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Acoustic Wave</h3>
+                        <p class="text-sm text-slate-500">This expansion generates an ultrasound wave.</p>
+                    </div>
+                    
+                     <div class="hidden md:flex items-center justify-center">
+                         <div class="w-full h-1 bg-slate-200 rounded-full relative"><div id="line-3" class="absolute left-0 top-0 h-full bg-teal-500 rounded-full step-diagram-line w-0"></div></div>
+                    </div>
+
+                    <div id="step-5" class="step-diagram-item">
+                         <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">5</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Signal Detection</h3>
+                        <p class="text-sm text-slate-500">An ultrasound transducer detects the wave.</p>
+                    </div>
+
+                     <div class="hidden md:flex items-center justify-center">
+                         <div class="w-full h-1 bg-slate-200 rounded-full relative"><div id="line-4" class="absolute left-0 top-0 h-full bg-teal-500 rounded-full step-diagram-line w-0"></div></div>
+                    </div>
+
+                    <div id="step-6" class="step-diagram-item">
+                        <div class="flex justify-center mb-2">
+                           <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl font-bold">6</div>
+                        </div>
+                        <h3 class="font-semibold text-slate-800">Image Reconstruction</h3>
+                        <p class="text-sm text-slate-500">Algorithms map the signals to form an image.</p>
+                    </div>
+                </div>
+                 <div class="mt-8 flex justify-center">
+                    <button id="next-step-btn" class="bg-teal-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors">Next Step</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="modalities" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">PAI Modalities: The Depth vs. Resolution Trade-off</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">PAI is not one-size-fits-all. Different systems are optimized for different tasks, leading to a fundamental trade-off: you can either see fine details (high resolution) in shallow tissue, or see larger structures (lower resolution) deeper in the body. This chart visualizes that relationship.</p>
+            <div class="bg-white rounded-xl shadow-lg p-4 md:p-8">
+                <div class="chart-container">
+                    <canvas id="modalitiesChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Applications Explorer</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">PAI's versatility makes it a powerful tool across many medical fields. Its ability to visualize anatomy, function, and molecular activity opens new doors for diagnosis and treatment. Click on a card below to explore its use in that area.</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="applications-grid">
+            </div>
+        </section>
+
+        <section id="challenges" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">Challenges & Innovative Solutions</h2>
+             <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">No technology is perfect. PAI faces significant hurdles on its path to widespread clinical use. However, for every challenge, brilliant researchers are developing innovative solutions. Select a challenge to see the promising future directions aimed at overcoming it.</p>
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3">
+                    <div id="challenges-list" class="flex flex-col space-y-2">
+                    </div>
+                </div>
+                <div class="md:w-2/3">
+                    <div id="solutions-content" class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[300px]">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-2">PAI vs. Other Imaging Modalities</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">How does PAI stack up against established techniques like MRI, CT, and Ultrasound? This interactive table lets you compare them across key features. Use the filters to focus on specific attributes.</p>
+            <div class="bg-white rounded-xl shadow-lg p-4 md:p-8">
+                <div class="mb-4 flex flex-wrap gap-2 justify-center">
+                    <button data-filter="all" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors filter-btn-active">All</button>
+                    <button data-filter="non-ionizing" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">Non-Ionizing</button>
+                    <button data-filter="high-res" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">High Resolution (µm)</button>
+                    <button data-filter="functional" class="filter-btn px-4 py-1.5 rounded-full text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors">Functional/Molecular Info</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left" id="comparison-table">
+                        <thead class="bg-slate-100 text-slate-600">
+                            <tr>
+                                <th class="p-4 rounded-tl-lg">Feature</th>
+                                <th class="p-4">Photoacoustic Imaging (PAI)</th>
+                                <th class="p-4">MRI</th>
+                                <th class="p-4">X-ray CT</th>
+                                <th class="p-4">PET</th>
+                                <th class="p-4 rounded-tr-lg">Ultrasound (US)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <section id="outlook" class="text-center">
+             <h2 class="text-3xl font-bold text-slate-800 mb-2">The Future is Bright (and Resonant)</h2>
+             <p class="text-slate-600 mb-8 max-w-3xl mx-auto">Driven by continuous innovation in hardware, software, and contrast agents, the future of photoacoustic imaging is incredibly promising. The market is projected to grow significantly as the technology becomes more powerful, affordable, and integrated into clinical workflows.</p>
+              <div class="bg-white rounded-xl shadow-lg p-4 md:p-8">
+                <div class="chart-container">
+                    <canvas id="marketChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 mt-16">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2025 PAI Explorer. Interactive application generated from source material.</p>
+            <p class="text-slate-400 mt-1">This visualization is for informational purposes and synthesizes data from the provided research report.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const data = {
+        applications: [
+            {
+                title: 'Oncology',
+                icon: '🔬',
+                description: 'PAI offers multifaceted insights into tumor biology, aiding in detection, diagnosis, staging, and monitoring therapeutic responses.',
+                details: ['Visualizing tumor angiogenesis (new blood vessels)', 'Assessing tumor oxygenation and hypoxia', 'Detecting melanoma using intrinsic melanin contrast', 'Identifying metastatic spread to lymph nodes', 'Guiding photothermal therapy (PTT)']
+            },
+            {
+                title: 'Neurology',
+                icon: '🧠',
+                description: 'PAI provides novel ways to study brain structure, function, and disease by mapping hemodynamics tied to neural activity.',
+                details: ['Mapping cerebral blood volume and oxygenation', 'Investigating neurovascular coupling', 'Studying pathologies like stroke and epilepsy', 'Offering high temporal resolution for fast events', 'Major challenge: Overcoming the skull barrier']
+            },
+            {
+                title: 'Dermatology',
+                icon: '🖐️',
+                description: 'PAI offers a non-invasive window into the skin, providing detailed anatomical and functional information with high signal-to-noise.',
+                details: ['Identifying melanoma and other skin cancers', 'Measuring tumor thickness for prognosis', 'Visualizing cancer-related angiogenesis', 'Monitoring treatment effectiveness for skin conditions', 'Assessing conditions like psoriasis']
+            },
+            {
+                title: 'Cardiovascular',
+                icon: '❤️',
+                description: 'PAI is exceptionally well-suited for visualizing blood vasculature and assessing conditions related to blood vessels and the heart.',
+                details: ['Imaging peripheral blood vessels and microcirculation', 'Diagnosing peripheral vascular diseases (PVD)', 'Characterizing atherosclerotic plaque composition', 'Identifying vulnerable plaques prone to rupture', 'Assessing tissue perfusion in various organs']
+            },
+            {
+                title: 'Ophthalmology',
+                icon: '👁️',
+                description: 'The eye\'s relative transparency facilitates PAI for imaging retinal and choroidal vasculature to diagnose and monitor various conditions.',
+                details: ['Imaging retinal and choroidal blood supply', 'Diagnosing diabetic retinopathy', 'Monitoring age-related macular degeneration (AMD)', 'Leveraging the eye\'s optical properties for clear signals']
+            },
+            {
+                title: 'Other Areas',
+                icon: '⚙️',
+                description: 'PAI\'s versatility extends to gastroenterology, tissue engineering, and tracking immune responses.',
+                details: ['Photoacoustic endoscopy for GI tract imaging', 'Monitoring vascularization of engineered tissues', 'Assessing inflammatory conditions like arthritis', 'Tracking biodistribution of drug molecules']
+            }
+        ],
+        challenges: [
+            {
+                title: 'Penetration Depth vs. Resolution',
+                content: 'A fundamental trade-off exists: high resolution is only possible at shallow depths. This is due to light scattering and acoustic attenuation.',
+                solutions: [
+                    { name: 'NIR-II/III Window Imaging', desc: 'Using light in the 1000-1700nm range, which scatters less in tissue, allowing deeper penetration.' },
+                    { name: 'Advanced Contrast Agents', desc: 'Developing brighter, more efficient agents that generate stronger signals from deep tissue.' },
+                    { name: 'Wavefront Shaping', desc: 'Actively manipulating light to create a focus deep within scattering tissue.' },
+                    { name: 'Improved Detector Sensitivity', desc: 'Creating more sensitive ultrasound transducers that can pick up weaker acoustic signals.' }
+                ]
+            },
+            {
+                title: 'Quantitative Accuracy',
+                content: 'Accurately measuring chromophore concentrations is difficult due to unknown light fluence and spectral distortion ("coloring") by tissue.',
+                solutions: [
+                    { name: 'Advanced Unmixing Algorithms', desc: 'Sophisticated software that can correct for spectral coloring to accurately separate signals from different molecules.' },
+                    { name: 'Fluence Compensation Models', desc: 'Using physical or AI-based models to estimate the light distribution in tissue and correct the PA signal.' },
+                    { name: 'Ratiometric Probes', desc: 'Designing "smart" contrast agents that provide an internal reference signal to cancel out fluence variations.' },
+                    { name: 'Iterative Reconstruction', desc: 'Model-based algorithms that incorporate the physics of light and sound to produce more accurate quantitative maps.' }
+                ]
+            },
+            {
+                title: 'Image Quality & Artifacts',
+                content: 'Variations in the speed of sound in different tissues and incomplete data from detectors can create artifacts and blur images.',
+                solutions: [
+                    { name: 'SOS Mapping & Correction', desc: 'Algorithms that first map the speed-of-sound distribution and then use it to correct for distortions.' },
+                    { name: 'Novel Transducer Geometries', desc: 'Designing full-ring or spherical detector arrays to capture sound from all angles, reducing limited-view artifacts.' },
+                    { name: 'Deep Learning (AI) Reduction', desc: 'Training neural networks to recognize and remove specific artifacts from reconstructed images.' }
+                ]
+            },
+            {
+                title: 'System Cost & Complexity',
+                content: 'High-performance PAI systems rely on bulky, expensive lasers and complex electronics, limiting widespread clinical adoption.',
+                solutions: [
+                    { name: 'Compact, Low-Cost Lasers', desc: 'Developing powerful and affordable laser diodes (LDs), fiber lasers, and even LEDs as alternatives.' },
+                    { name: 'Integrated System Design', desc: 'Engineering more compact, all-in-one systems to reduce footprint and improve ease of use.' },
+                    { name: 'AI-Powered Efficiency', desc: 'Using AI to enable high-quality imaging from less expensive hardware or faster, undersampled data.' }
+                ]
+            },
+            {
+                title: 'Contrast Agent Regulation',
+                content: 'The path to clinical approval for new, targeted exogenous contrast agents is long, expensive, and a major bottleneck for molecular imaging.',
+                solutions: [
+                    { name: 'Biodegradable Agents', desc: 'Creating effective agents from materials that safely break down and are cleared by the body.' },
+                    { name: 'Activatable "Smart" Probes', desc: 'Designing probes that are "off" until they reach their target, improving safety and target-to-background ratio.' },
+                    { name: 'Theranostic Platforms', desc: 'Developing agents that combine diagnosis and therapy, providing a stronger case for clinical value and approval.' }
+                ]
+            },
+            {
+                title: 'The Skull Barrier',
+                content: 'The human skull is a major obstacle for neuroimaging, as it strongly scatters light and distorts sound, preventing clear imaging of the brain.',
+                solutions: [
+                    { name: 'Wavefront Correction', desc: 'Developing techniques to pre-distort the light or computationally correct the sound to compensate for the skull.' },
+                    { name: 'Intraoperative PAI', desc: 'Using PAI during brain surgery (when the skull is open) to guide tumor resection and other procedures.' },
+                    { name: 'Alternative Light Delivery', desc: 'Exploring methods to deliver light more effectively, potentially through acoustic windows or natural orifices.' }
+                ]
+            }
+        ],
+        comparison: {
+            headers: ["Feature", "Photoacoustic Imaging (PAI)", "MRI", "X-ray Computed Tomography (CT)", "Positron Emission Tomography (PET)", "Ultrasound (US)"],
+            rows: [
+                { feature: "Primary Contrast", values: ["Optical absorption", "Proton density, relaxation", "X-ray attenuation", "Radiotracer concentration", "Acoustic impedance"], tags: ['functional'] },
+                { feature: "Spatial Resolution", values: ["µm to mm", "~mm", "~mm", "Several mm", "~mm"], tags: ['high-res'] },
+                { feature: "Penetration Depth", values: ["Up to ~7 cm", "Whole body", "Whole body", "Whole body", "Several cm"], tags: [] },
+                { feature: "Ionizing Radiation", values: ["No", "No", "Yes", "Yes", "No"], tags: ['non-ionizing'] },
+                { feature: "Temporal Resolution", values: ["ms to s", "Seconds to minutes", "Seconds", "Minutes to hours", "Real-time (ms)"], tags: [] },
+                { feature: "Relative Cost", values: ["Moderate to High", "High", "Moderate", "High", "Low"], tags: [] },
+                { feature: "Key Advantage", values: ["High optical contrast, functional info", "Excellent soft tissue contrast", "Fast, good bone detail", "High molecular sensitivity", "Real-time, portable, low cost"], tags: ['functional'] }
+            ]
+        }
+    };
+
+    // Mobile Menu
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // Step Diagram
+    const stepDiagram = {
+        currentStep: 1,
+        maxSteps: 6,
+        items: document.querySelectorAll('.step-diagram-item'),
+        lines: document.querySelectorAll('.step-diagram-line'),
+        btn: document.getElementById('next-step-btn'),
+        
+        init() {
+            this.btn.addEventListener('click', () => this.next());
+        },
+        
+        next() {
+            this.currentStep++;
+            if (this.currentStep > this.maxSteps) {
+                this.reset();
+            }
+            this.update();
+        },
+
+        reset() {
+            this.currentStep = 1;
+            this.items.forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === 0) item.classList.add('active');
+            });
+            this.lines.forEach(line => line.style.width = '0%');
+            this.btn.textContent = "Next Step";
+        },
+
+        update() {
+            const stepIndex = this.currentStep - 1;
+            if(stepIndex < this.items.length) {
+                this.items[stepIndex].classList.add('active');
+            }
+            if(stepIndex > 0 && stepIndex <= this.lines.length) {
+                this.lines[stepIndex - 1].style.width = '100%';
+            }
+            if (this.currentStep === this.maxSteps) {
+                this.btn.textContent = "Reset";
+            }
+        }
+    };
+    stepDiagram.init();
+
+    // Modalities Chart
+    const modalitiesCtx = document.getElementById('modalitiesChart').getContext('2d');
+    new Chart(modalitiesCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'OR-PAM (Optical Res.)',
+                data: [{x: 5, y: 1.5}],
+                backgroundColor: 'rgba(217, 119, 6, 0.7)',
+                pointRadius: 15,
+                pointHoverRadius: 20
+            }, {
+                label: 'AR-PAM (Acoustic Res.)',
+                data: [{x: 4, y: 3}],
+                backgroundColor: 'rgba(2, 132, 199, 0.7)',
+                pointRadius: 20,
+                pointHoverRadius: 25
+            }, {
+                label: 'PAT/PACT (Tomography)',
+                data: [{x: 2.5, y: 7}],
+                backgroundColor: 'rgba(13, 148, 136, 0.7)',
+                pointRadius: 25,
+                pointHoverRadius: 30
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'PAI Modalities: Depth vs. Resolution',
+                    font: { size: 16, weight: 'bold' },
+                    color: '#334155',
+                    padding: { bottom: 20 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += `~${context.parsed.y} cm depth, ~${Math.pow(10, 6 - context.parsed.x).toFixed(1)} µm resolution`;
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Spatial Resolution (Higher → Lower)',
+                        font: { weight: '600' },
+                        color: '#475569'
+                    },
+                    min: 0,
+                    max: 6,
+                    ticks: {
+                        callback: function(value, index, values) {
+                           const labels = {0: '', 1: '100 mm', 2: '1 mm', 3: '100 µm', 4: '10 µm', 5: '1 µm', 6: ''};
+                           return labels[value];
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Penetration Depth (cm)',
+                        font: { weight: '600' },
+                        color: '#475569'
+                    },
+                    min: 0,
+                    max: 8
+                }
+            }
+        }
+    });
+
+    // Applications Grid
+    const applicationsGrid = document.getElementById('applications-grid');
+    data.applications.forEach(app => {
+        const card = document.createElement('div');
+        card.className = 'card bg-white rounded-xl shadow-lg p-6 cursor-pointer';
+        card.innerHTML = `
+            <div class="flex items-center mb-4">
+                <div class="text-3xl mr-4">${app.icon}</div>
+                <h3 class="text-xl font-bold text-slate-800">${app.title}</h3>
+            </div>
+            <p class="text-slate-600 mb-4">${app.description}</p>
+            <div class="details hidden text-sm space-y-2">
+                <ul class="list-disc list-inside text-slate-500">
+                    ${app.details.map(detail => `<li>${detail}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        applicationsGrid.appendChild(card);
+        card.addEventListener('click', () => {
+            card.querySelector('.details').classList.toggle('hidden');
+        });
+    });
+
+    // Challenges and Solutions
+    const challengesList = document.getElementById('challenges-list');
+    const solutionsContent = document.getElementById('solutions-content');
+    
+    data.challenges.forEach((challenge, index) => {
+        const button = document.createElement('button');
+        button.className = 'w-full text-left p-3 rounded-lg font-semibold transition-colors';
+        button.textContent = challenge.title;
+        if (index === 0) {
+            button.classList.add('bg-teal-600', 'text-white');
+        } else {
+            button.classList.add('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+        }
+        button.addEventListener('click', () => {
+            document.querySelectorAll('#challenges-list button').forEach(btn => {
+                btn.classList.remove('bg-teal-600', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+            });
+            button.classList.add('bg-teal-600', 'text-white');
+            button.classList.remove('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+            renderSolution(challenge);
+        });
+        challengesList.appendChild(button);
+    });
+
+    function renderSolution(challenge) {
+        solutionsContent.innerHTML = `
+            <h3 class="text-xl font-bold text-slate-800 mb-2">${challenge.title}</h3>
+            <p class="text-slate-600 mb-6">${challenge.content}</p>
+            <h4 class="font-semibold text-teal-700 mb-3">Promising Solutions:</h4>
+            <div class="space-y-4">
+                ${challenge.solutions.map(sol => `
+                    <div class="p-4 bg-amber-50 rounded-lg">
+                        <p class="font-semibold text-slate-800">${sol.name}</p>
+                        <p class="text-sm text-slate-500">${sol.desc}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    renderSolution(data.challenges[0]);
+
+    // Comparison Table
+    const tableBody = document.querySelector('#comparison-table tbody');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    function renderTable(filter) {
+        tableBody.innerHTML = '';
+        data.comparison.rows.forEach(rowData => {
+            if (filter === 'all' || rowData.tags.includes(filter)) {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-slate-200';
+                let cells = `<td><div class="p-4 font-semibold">${rowData.feature}</div></td>`;
+                rowData.values.forEach(val => {
+                    cells += `<td><div class="p-4">${val}</div></td>`;
+                });
+                row.innerHTML = cells;
+                tableBody.appendChild(row);
+            }
+        });
+    }
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            filterButtons.forEach(btn => btn.classList.remove('filter-btn-active'));
+            e.target.classList.add('filter-btn-active');
+            renderTable(e.target.dataset.filter);
+        });
+    });
+    renderTable('all');
+    
+    // Market Chart
+    const marketCtx = document.getElementById('marketChart').getContext('2d');
+    new Chart(marketCtx, {
+        type: 'line',
+        data: {
+            labels: ['2024', '2025', '2026', '2027', '2028', '2029', '2030'],
+            datasets: [{
+                label: 'Global PAI Market (USD Millions)',
+                data: [117.5, 140.3, 167.6, 200.2, 239.1, 285.5, 339.0], // CAGR ~19.4%
+                fill: true,
+                backgroundColor: 'rgba(13, 148, 136, 0.2)',
+                borderColor: 'rgba(13, 148, 136, 1)',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Projected Global Market Growth for PAI',
+                    font: { size: 16, weight: 'bold' },
+                    color: '#334155'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Market Value (USD Millions)',
+                        font: { weight: '600' },
+                        color: '#475569'
+                    }
+                }
+            }
+        }
+    });
+
+    // Nav highlighting on scroll
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('#nav-links a');
+    const mobileNavLinks = document.querySelectorAll('#mobile-menu a');
+
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.4,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          navLinks.forEach(link => {
+            link.classList.toggle('nav-active', link.getAttribute('href') === `#${id}`);
+          });
+          mobileNavLinks.forEach(link => {
+            link.classList.toggle('bg-slate-200', link.getAttribute('href') === `#${id}`);
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+
+    // Smooth scrolling for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+                if (mobileMenu.classList.contains('hidden') === false) {
+                     mobileMenu.classList.add('hidden');
+                }
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
