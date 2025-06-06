@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awesome Photoacoustics: An Interactive Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Deep Tech Teal" - A professional and modern palette using a light gray background (slate-100), with a darker slate for text (slate-800) and a sophisticated teal (teal-600) for accents, navigation, and interactive elements. This provides excellent readability and a clean, high-tech aesthetic suitable for a research-focused topic. -->
+    <!-- Application Structure Plan: The SPA is designed as a focused, interactive list, curating key resources and information from the "awesome list". The architecture is thematic and streamlined: 1) A 'Hero' section introduces the topic. 2) An interactive 'Timeline of Discovery' visually presents the historical milestones. 3) A 'Leading Research Hubs' section displays labs as cards for easy scanning. 4) A 'Resource Library' makes reviews and conferences highly usable with live search functionality. 5) A 'Challenges & The Future' section connects problems with innovations. This refined structure removes the foundational technology sections to focus on historical context, key players, literature, and future outlook, creating a more targeted resource guide. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Historical Milestones -> Goal: Show Progression -> Viz/Method: Interactive Timeline (HTML/CSS/JS). Interaction: Click events on years to highlight details. Justification: More engaging and intuitive for historical data than a text list.
+        - Report Info: Leading Labs -> Goal: Organize & Inform -> Viz/Method: Grid of cards with links. Interaction: Hover effects and clickable titles. Justification: Provides a quick, scannable overview of key research centers.
+        - Report Info: Review Papers & Conferences -> Goal: Organize & Enable Search -> Viz/Method: Dynamic list with live search input and hyperlinks. Interaction: User types to search; clicks title to open link. Justification: Turns a static bibliography into a powerful, user-centric research tool.
+        - Report Info: Challenges & Future -> Goal: Relate Problems to Solutions -> Viz/Method: Two-column layout connecting challenges with future innovations. Interaction: Clear visual grouping. Justification: Directly links problems with solutions for better comprehension. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+        }
+        .nav-active {
+            color: #0d9488; /* teal-600 */
+            font-weight: 600;
+            border-bottom: 2px solid #0d9488;
+        }
+        .card {
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .timeline-item {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .timeline-item.active {
+            background-color: #0d9488; /* teal-600 */
+            color: white;
+        }
+        .timeline-item.active .timeline-year {
+             color: white;
+        }
+        .timeline-line {
+            width: calc(100% - 2rem);
+            left: 1rem;
+        }
+        .link {
+            color: #0d9488;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <header class="sticky top-0 bg-slate-100/80 backdrop-blur-lg z-50 shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-teal-700">Awesome Photoacoustics</span>
+                </div>
+                <div class="hidden md:block">
+                    <div id="nav-links" class="ml-10 flex items-baseline space-x-4">
+                        <a href="#timeline" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-teal-600">Timeline</a>
+                        <a href="#labs" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-teal-600">Labs</a>
+                        <a href="#resources" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-teal-600">Resources</a>
+                        <a href="#future" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-teal-600">Future</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <section id="hero" class="text-center mb-16 md:mb-24">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 leading-tight">
+                An Awesome List of Photoacoustic Imaging
+            </h1>
+            <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">
+                An interactive guide to the foundational discoveries, key technologies, and transformative applications of the imaging modality that combines <span class="font-semibold text-teal-600">light and sound</span>.
+            </p>
+        </section>
+
+        <section id="timeline" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-2">A Century of Discovery</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">From a curious physical observation to a sophisticated biomedical tool, the journey of photoacoustic imaging is marked by key discoveries and the maturation of enabling technologies. Explore the milestones that shaped the field.</p>
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div class="relative">
+                    <div class="timeline-line absolute top-1/2 -translate-y-1/2 h-1 bg-slate-200"></div>
+                    <div id="timeline-container" class="relative flex justify-between items-center"></div>
+                </div>
+                <div id="timeline-details" class="mt-8 p-6 bg-slate-50 rounded-lg min-h-[100px] transition-all duration-300">
+                </div>
+            </div>
+        </section>
+
+        <section id="labs" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-2">Leading Research Hubs</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">The rapid advancement of PAI is driven by dedicated research groups and commercial entities worldwide. These hubs produce high-impact research and train the next generation of scientists.</p>
+            <div id="labs-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <section id="resources" class="mb-16 md:mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-2">Resource Library</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">Dive deeper into the literature with this curated and searchable list of influential review articles and key conference proceedings that have shaped the field.</p>
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <input type="text" id="resource-search" placeholder="🔍 Search by title, author, or keyword..." class="w-full p-3 border border-slate-300 rounded-lg mb-6">
+                <div id="resource-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-4"></div>
+            </div>
+        </section>
+
+        <section id="future" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-2">Challenges & The Future</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-3xl mx-auto">For PAI to realize its full clinical potential, key challenges must be addressed. Explore the current hurdles and the exciting innovations paving the way for the future.</p>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-3">⚠️</span> Key Challenges
+                    </h3>
+                    <ul class="space-y-3 text-slate-600 list-disc list-inside">
+                        <li><strong>Penetration Depth:</strong> Reliably imaging beyond a few centimeters remains difficult due to light and sound attenuation.</li>
+                        <li><strong>Quantitative Accuracy:</strong> Correcting for light fluence variations and tissue properties to get precise measurements is complex.</li>
+                        <li><strong>Clinical Translation:</strong> High cost, lack of standardization, and regulatory hurdles for systems and contrast agents slow adoption.</li>
+                        <li><strong>Image Quality:</strong> Limited-view artifacts and resolution limitations persist, especially with simpler clinical systems.</li>
+                        <li><strong>The Skull Barrier:</strong> The human skull remains a formidable obstacle for non-invasive, high-resolution brain imaging.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                        <span class="text-2xl mr-3">🚀 Future Vision</span>
+                    </h3>
+                    <ul class="space-y-3 text-slate-600 list-disc list-inside">
+                        <li><strong>AI-Driven PAI:</strong> Deep learning will revolutionize reconstruction, quantification, and even diagnostic decision support.</li>
+                        <li><strong>Portable & Point-of-Care:</strong> Compact laser diodes and detectors will enable smaller, more affordable systems for wider use.</li>
+                        <li><strong>Advanced "Smart" Probes:</strong> Clinically-approved theranostic and activatable agents will enable targeted therapy and molecular sensing.</li>
+                        <li><strong>Multimodal Synergies:</strong> Deeper integration with ultrasound, MRI, and other modalities will provide a more holistic view of disease.</li>
+                        <li><strong>Novel Applications:</strong> As technology matures, PAI will tackle new challenges in fields like rheumatology, gastroenterology, and beyond.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-300 mt-16">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2025 Awesome Photoacoustics. Synthesized from research compilation.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const data = {
+        timeline: [
+            { year: 1880, title: 'Discovery of the Photoacoustic Effect', person: 'Alexander Graham Bell', description: 'Bell discovers that modulated sunlight can induce sound in solid substances, laying the physical foundation for the entire field.', paper: 'Bell, A. G. (1880). Am J Sci', link: 'https://archive.org/details/americanjourna3201880newh/page/304/mode/2up' },
+            { year: 1981, title: 'Proposal for Biomedical Imaging', person: 'Theodore Bowen', description: 'Bowen first proposes using the photoacoustic effect specifically for biomedical imaging, conceptualizing its application in medicine.', paper: 'Bowen, T. (1981). Proc. IEEE Ultrason. Symp.', link: 'https://ieeexplore.ieee.org/document/197368' },
+            { year: 1995, title: 'First Biomedical PAI Tomography', person: 'Robert Kruger et al.', description: 'Kruger\'s group demonstrates one of the first photoacoustic reconstruction tomography systems, proving feasibility with new laser and transducer technologies.', paper: 'Kruger, R., et al. (1995). Med. Phys.', link: 'https://aapm.onlinelibrary.wiley.com/doi/10.1118/1.597429' },
+            { year: 2003, title: 'First Functional Brain Imaging', person: 'Lihong V. Wang et al.', description: 'A landmark paper reports the first functional PAT of a rat brain, non-invasively imaging hemodynamic responses to stimuli and showcasing PAI\'s potential for functional imaging.', paper: 'Wang, X., et al. (2003). Nat. Biotechnol.', link: 'https://www.nature.com/articles/nbt839' },
+            { year: 2006, title: 'Functional AR-PAM In Vivo', person: 'Zhang, E. et al.', description: 'Demonstrates functional acoustic-resolution photoacoustic microscopy (AR-PAM) in vivo, establishing a key modality that balances imaging depth and resolution.', paper: 'Zhang, E. et al. (2006) Nat. Biotechnol.', link: 'https://www.nature.com/articles/nbt1223' },
+        ],
+        labs: [
+            { name: 'Johns Hopkins University', leader: 'PULSE Lab (Prof. M. A. Lediju Bell)', focus: 'Surgical guidance, transcranial PAI, advanced beamforming.', link: 'https://pulse.jhu.edu/'},
+            { name: 'University College London', leader: 'BORL (Profs. Beard, Cox, Treeby)', focus: 'Instrumentation, all-optical PAI, reconstruction (k-Wave).', link: 'https://www.ucl.ac.uk/medical-physics-biomedical-engineering/research/research-groups/biomedical-optics-research-laboratory-borl'},
+            { name: 'Caltech', leader: 'Prof. Lihong V. Wang Lab', focus: 'Pioneering PACT/PAM, functional imaging, quantitative PAI.', link: 'https://www.eas.caltech.edu/people/lihong-v-wang'},
+            { name: 'MD Anderson Cancer Center', leader: 'Profs. Bouchard & Melancon', focus: 'Oncology, theranostics, nanoparticle contrast agents.', link: 'https://www.mdanderson.org/research/departments-labs-institutes/labs/photoacoustic-imaging-research-laboratory.html'},
+            { name: 'FUJIFILM VisualSonics', leader: 'Commercial Entity', focus: 'Leading provider of preclinical high-frequency PA/US systems.', link: 'https://www.visualsonics.com/'},
+            { name: 'iThera Medical', leader: 'Commercial Entity', focus: 'Commercializes clinical MSOT systems for inflammation and cancer.', link: 'https://www.ithera-medical.com/'}
+        ],
+        resources: [
+            { title: 'Photoacoustic imaging in biomedicine', authors: 'Xu, M., & Wang, L. V. (2006)', journal: 'Review of Scientific Instruments', type: 'Review', keywords: 'general principles instrumentation overview', link: 'https://aip.scitation.org/doi/10.1063/1.2195024' },
+            { title: 'Multiscale photoacoustic microscopy and computed tomography', authors: 'Wang, L. V. (2009)', journal: 'Nature Photonics', type: 'Review', keywords: 'multiscale pam pact', link: 'https://www.nature.com/articles/nphoton.2009.157' },
+            { title: 'Biomedical photoacoustic imaging', authors: 'Beard, P. (2011)', journal: 'Interface Focus', type: 'Review', keywords: 'physics instrumentation applications', link: 'https://royalsocietypublishing.org/doi/10.1098/rsfs.2011.0028' },
+            { title: 'In vivo photoacoustic tomography of chemicals', authors: 'Kim, C., et al. (2010)', journal: 'Chemical Reviews', type: 'Review', keywords: 'molecular chemical high-resolution', link: 'https://pubs.acs.org/doi/10.1021/cr900266q' },
+            { title: 'Clinical photoacoustic imaging', authors: 'Park, S., et al. (2024)', journal: 'Nature Reviews Bioengineering', type: 'Review', keywords: 'clinical translation challenges', link: 'https://www.nature.com/articles/s44222-024-00161-5' },
+            { title: 'Neurovascular photoacoustic tomography', authors: 'Hu, S., & Wang, L. V. (2010)', journal: 'Frontiers in Neuroenergetics', type: 'Review', keywords: 'neuroimaging neurovascular brain', link: 'https://www.frontiersin.org/articles/10.3389/fnene.2010.00010/full' },
+            { title: 'Recent advancements in photoacoustic contrast agents', authors: 'Nie, L., & Chen, X. (2014)', journal: 'Drug discovery today', type: 'Review', keywords: 'contrast agents nir-ii ratiometric therapy', link: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4168019/' },
+            { title: 'Image reconstruction in photoacoustic tomography: a review', authors: 'Hauptmann, A. H., et al. (2020)', journal: 'IEEE Transactions on Medical Imaging', type: 'Review', keywords: 'reconstruction algorithms deep learning pact', link: 'https://ieeexplore.ieee.org/document/9039322' },
+            { title: 'Deep learning in photoacoustic imaging: a review', authors: 'Deng, H., et al. (2021)', journal: 'Journal of Biomedical Optics', type: 'Review', keywords: 'deep learning ai reconstruction quantification', link: 'https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-26/issue-04/040901/Deep-learning-in-photoacoustic-imaging-a-review/10.1117/1.JBO.26.4.040901.full' },
+            { title: 'Optical aspects of quantitative photoacoustic tomography', authors: 'Tarvainen, T., & Cox, B. T. (2024)', journal: 'Journal of Biomedical Optics', type: 'Review', keywords: 'quantitative qpai optical inverse problem fluence', link: 'https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-29/issue-S1/S11509/Optical-aspects-of-quantitative-photoacoustic-tomography-models-inverse-problems-and/10.1117/1.JBO.29.S1.S11509.full' },
+            { title: 'SPIE Photonics West (BiOS)', authors: 'Conference', journal: 'Proc. SPIE', type: 'Conference', keywords: 'conference proceedings biomedical optics', link: 'https://spie.org/conferences-and-exhibitions/photonics-west' },
+            { title: 'IEEE International Ultrasonics Symposium (IUS)', authors: 'Conference', journal: 'IEEE', type: 'Conference', keywords: 'ultrasound transducers reconstruction', link: 'https://2024.ieee-ius.org/' },
+            { title: 'World Molecular Imaging Congress (WMIC)', authors: 'Conference', journal: 'WMIS', type: 'Conference', keywords: 'molecular imaging probes oncology', link: 'https://www.wmis.org/wmic-2024/' },
+        ]
+    };
+
+    // --- Navigation ---
+    const navLinks = document.querySelectorAll('#nav-links a');
+    const sections = document.querySelectorAll('section');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.remove('nav-active');
+                    if (link.getAttribute('href') === `#${id}`) {
+                        link.classList.add('nav-active');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-30% 0px -70% 0px' });
+    sections.forEach(section => observer.observe(section));
+    navLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelector(link.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // --- Timeline ---
+    const timelineContainer = document.getElementById('timeline-container');
+    const timelineDetails = document.getElementById('timeline-details');
+    data.timeline.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'timeline-item relative flex flex-col items-center p-2 rounded-full z-10';
+        div.dataset.index = index;
+        div.innerHTML = `<div class="w-4 h-4 bg-white border-2 border-slate-300 rounded-full"></div><span class="timeline-year mt-2 text-sm font-semibold text-slate-500">${item.year}</span>`;
+        timelineContainer.appendChild(div);
+    });
+    
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    function updateTimeline(index) {
+        const item = data.timeline[index];
+        timelineDetails.innerHTML = `<h3 class="font-bold text-lg text-teal-700">${item.title} (${item.year})</h3><p class="text-sm font-medium text-slate-600 mb-2">${item.person}</p><p class="text-slate-700">${item.description}</p><p class="text-xs text-slate-400 mt-2">Key Paper: <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="link">${item.paper}</a></p>`;
+        timelineItems.forEach(el => el.classList.remove('active'));
+        timelineItems[index].classList.add('active');
+    }
+
+    timelineContainer.addEventListener('click', e => {
+        const target = e.target.closest('.timeline-item');
+        if (target) { updateTimeline(target.dataset.index); }
+    });
+    updateTimeline(0);
+
+    // --- Labs ---
+    const labsGrid = document.getElementById('labs-grid');
+    labsGrid.innerHTML = data.labs.map(lab => `<div class="bg-white rounded-xl shadow p-5"><h3 class="font-bold text-lg"><a href="${lab.link}" target="_blank" rel="noopener noreferrer" class="link">${lab.name}</a></h3><p class="text-sm font-medium text-slate-600">${lab.leader}</p><p class="text-xs text-slate-500 mt-2">${lab.focus}</p></div>`).join('');
+
+    // --- Resources ---
+    const resourceSearch = document.getElementById('resource-search');
+    const resourceList = document.getElementById('resource-list');
+
+    function renderResources(filterText = '') {
+        const filtered = data.resources.filter(res => `${res.title} ${res.authors} ${res.keywords}`.toLowerCase().includes(filterText.toLowerCase()));
+        if (filtered.length === 0) {
+             resourceList.innerHTML = `<p class="text-center text-slate-500">No resources found.</p>`;
+             return;
+        }
+        resourceList.innerHTML = filtered.map(res => `<div class="border-b border-slate-200 pb-3"><h4 class="font-semibold text-slate-800"><a href="${res.link}" target="_blank" rel="noopener noreferrer" class="link">${res.title}</a></h4><p class="text-sm text-slate-600">${res.authors}</p><div class="flex items-center justify-between mt-1"><p class="text-xs italic text-slate-500">${res.journal}</p><span class="text-xs font-bold ${res.type === 'Review' ? 'bg-teal-100 text-teal-800' : 'bg-blue-100 text-blue-800'} px-2 py-0.5 rounded-full">${res.type}</span></div></div>`).join('');
+    }
+
+    resourceSearch.addEventListener('input', () => renderResources(resourceSearch.value));
+    renderResources();
+
+});
+</script>
+</body>
+</html>
